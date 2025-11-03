@@ -64,16 +64,17 @@ export function CircularVisualizer({
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
 
-            // Calculate bass strength if bass response is enabled
+            // Calculate bass strength for both outer and inner circles
+            const bassRange = Math.floor(bufferLength * 0.1);
+            let bassSum = 0;
+            for (let i = 0; i < bassRange; i++) {
+                bassSum += dataArray[i];
+            }
+            const bassIntensity = bassSum / (bassRange * 255);
+
+            // Calculate outer circle radius
             let baseRadius: number;
             if (circularConfig.bassResponseCircle) {
-                const bassRange = Math.floor(bufferLength * 0.1);
-                let bassSum = 0;
-                for (let i = 0; i < bassRange; i++) {
-                    bassSum += dataArray[i];
-                }
-                const bassIntensity = bassSum / (bassRange * 255);
-
                 const minRadius =
                     Math.min(canvas.width, canvas.height) * circularConfig.baseRadiusMin;
                 const maxRadius =
@@ -88,13 +89,13 @@ export function CircularVisualizer({
             const barCount = circularConfig.barCount;
             const angleStep = (Math.PI * 2) / barCount;
 
-            // Draw center circle
+            // Draw center circle (outer ring)
             ctx.beginPath();
             ctx.arc(centerX, centerY, baseRadius, 0, Math.PI * 2);
             ctx.fillStyle = "rgba(0, 0, 0, 1)";
             ctx.fill();
 
-            // Convert hex color to rgba for circle border
+            // Convert hex color to rgba
             const hexToRgba = (hex: string, alpha: number) => {
                 const r = Number.parseInt(hex.slice(1, 3), 16);
                 const g = Number.parseInt(hex.slice(3, 5), 16);
@@ -105,6 +106,103 @@ export function CircularVisualizer({
             ctx.strokeStyle = hexToRgba(config.colorScheme.primary, 0.3);
             ctx.lineWidth = 2;
             ctx.stroke();
+
+            // === FANCY INNER CIRCLE VISUALIZATION ===
+
+            // Calculate dynamic inner circle size based on bass (can exceed base radius on heavy bass)
+            const innerCircleRadius = baseRadius * 0.6 * (0.15 + bassIntensity * 1.8);
+
+            // 1. Outer glow layer (large, soft)
+            const outerGlow = ctx.createRadialGradient(
+                centerX,
+                centerY,
+                0,
+                centerX,
+                centerY,
+                innerCircleRadius * 1.5
+            );
+            outerGlow.addColorStop(0, hexToRgba(config.colorScheme.secondary, 0.3));
+            outerGlow.addColorStop(0.4, hexToRgba(config.colorScheme.secondary, 0.15));
+            outerGlow.addColorStop(1, hexToRgba(config.colorScheme.secondary, 0));
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, innerCircleRadius * 1.5, 0, Math.PI * 2);
+            ctx.fillStyle = outerGlow;
+            ctx.fill();
+
+            // 2. Main gradient circle with enhanced glow
+            const mainGradient = ctx.createRadialGradient(
+                centerX,
+                centerY,
+                0,
+                centerX,
+                centerY,
+                innerCircleRadius
+            );
+            mainGradient.addColorStop(0, hexToRgba(config.colorScheme.secondary, 0.95));
+            mainGradient.addColorStop(0.3, hexToRgba(config.colorScheme.secondary, 0.8));
+            mainGradient.addColorStop(0.7, hexToRgba(config.colorScheme.secondary, 0.5));
+            mainGradient.addColorStop(1, hexToRgba(config.colorScheme.secondary, 0.1));
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, innerCircleRadius, 0, Math.PI * 2);
+            ctx.fillStyle = mainGradient;
+            ctx.fill();
+
+            // 3. Pulsing ring effect (mid-layer)
+            const pulseRadius = innerCircleRadius * 0.7;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, pulseRadius, 0, Math.PI * 2);
+            ctx.strokeStyle = hexToRgba(config.colorScheme.primary, 0.4 + bassIntensity * 0.4);
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // 4. Inner core with bright center
+            const coreGradient = ctx.createRadialGradient(
+                centerX,
+                centerY,
+                0,
+                centerX,
+                centerY,
+                innerCircleRadius * 0.4
+            );
+            coreGradient.addColorStop(0, hexToRgba(config.colorScheme.primary, 1));
+            coreGradient.addColorStop(0.5, hexToRgba(config.colorScheme.primary, 0.6));
+            coreGradient.addColorStop(1, hexToRgba(config.colorScheme.secondary, 0.3));
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, innerCircleRadius * 0.4, 0, Math.PI * 2);
+            ctx.fillStyle = coreGradient;
+            ctx.fill();
+
+            // 5. Rotating energy rings (based on rotation if auto-rotate is on)
+            const currentRotation = circularConfig.autoRotate ? rotationRef.current : 0;
+            const ringCount = 6;
+            for (let i = 0; i < ringCount; i++) {
+                const angle = (currentRotation * 2 + (i * Math.PI * 2) / ringCount) % (Math.PI * 2);
+                const ringRadius = innerCircleRadius * 0.5;
+                const x = centerX + Math.cos(angle) * ringRadius * 0.6;
+                const y = centerY + Math.sin(angle) * ringRadius * 0.6;
+
+                const dotGradient = ctx.createRadialGradient(x, y, 0, x, y, 4);
+                dotGradient.addColorStop(0, hexToRgba(config.colorScheme.primary, 0.8));
+                dotGradient.addColorStop(1, hexToRgba(config.colorScheme.primary, 0));
+
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fillStyle = dotGradient;
+                ctx.fill();
+            }
+
+            // 6. Outer border with glow
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, innerCircleRadius, 0, Math.PI * 2);
+            ctx.strokeStyle = hexToRgba(config.colorScheme.primary, 0.8);
+            ctx.lineWidth = 2;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = hexToRgba(config.colorScheme.primary, 0.6);
+            ctx.stroke();
+            ctx.shadowBlur = 0; // Reset shadow
 
             // Frequency distribution based on number of poles
             const poles = circularConfig.poles;

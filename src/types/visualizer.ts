@@ -169,10 +169,10 @@ export const COLOR_PRESETS: ColorScheme[] = [
 	}, // Awesome Mix vibes
 	{
 		group: "Legendary",
-		name: "Beetlejuice",
+		name: "Evangelion",
 		primary: "#00ff00",
 		secondary: "#9400d3",
-	}, // Green ghost & purple
+	}, // Robots and angels
 	{
 		group: "Legendary",
 		name: "Drive",

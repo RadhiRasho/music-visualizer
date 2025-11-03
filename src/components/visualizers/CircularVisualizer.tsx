@@ -17,12 +17,15 @@ export function CircularVisualizer({
     const animationIdRef = useRef<number | null>(null);
     const rotationRef = useRef<number>(0);
     const circularConfig = config.circularConfig ?? {
+        autoRotate: false,
         barCount: 360,
         baseRadiusMax: 0.25,
         baseRadiusMin: 0.1,
+        bassResponseCircle: true,
         maxBarHeight: 0.35,
         poles: 2,
         rotationOffset: 130,
+        rotationSpeed: 0.1,
     };
 
     useEffect(() => {
@@ -37,8 +40,8 @@ export function CircularVisualizer({
             const bufferLength = analyser.frequencyBinCount;
 
             // Update rotation if auto-rotate is enabled
-            if (config.autoRotate) {
-                rotationRef.current += config.rotationSpeed;
+            if (circularConfig.autoRotate) {
+                rotationRef.current += circularConfig.rotationSpeed;
             }
 
             // Read frequency data
@@ -63,7 +66,7 @@ export function CircularVisualizer({
 
             // Calculate bass strength if bass response is enabled
             let baseRadius: number;
-            if (config.bassResponseCircle) {
+            if (circularConfig.bassResponseCircle) {
                 const bassRange = Math.floor(bufferLength * 0.1);
                 let bassSum = 0;
                 for (let i = 0; i < bassRange; i++) {

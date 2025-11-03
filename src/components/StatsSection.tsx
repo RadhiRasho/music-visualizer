@@ -149,7 +149,7 @@ export function StatsSection({
 
                             <div className="flex justify-between">
                                 <span className="text-white/60">Auto-Rotate:</span>
-                                <span className="text-indigo-400">{config.autoRotate ? 'ON' : 'OFF'}</span>
+                                <span className="text-indigo-400">{config.circularConfig?.autoRotate ? 'ON' : 'OFF'}</span>
                             </div>
                         </>
                     )}

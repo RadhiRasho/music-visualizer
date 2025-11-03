@@ -15,12 +15,15 @@ export function VisualizerSettings({
     onChange,
 }: VisualizerSettingsProps) {
     const circularConfig = config.circularConfig ?? {
+        autoRotate: false,
         barCount: 360,
         baseRadiusMax: 0.25,
         baseRadiusMin: 0.1,
+        bassResponseCircle: true,
         maxBarHeight: 0.35,
         poles: 2,
         rotationOffset: 130,
+        rotationSpeed: 0.1,
     };
 
     const updateCircularConfig = (updates: Partial<typeof circularConfig>) => {
@@ -105,11 +108,10 @@ export function VisualizerSettings({
                         >
                             <span>Bass Pulse Effect</span>
                             <Switch
-                                checked={config.bassResponseCircle}
+                                checked={circularConfig.bassResponseCircle}
                                 id="bass-pulse"
                                 onCheckedChange={(checked) =>
-                                    onChange({
-                                        ...config,
+                                    updateCircularConfig({
                                         bassResponseCircle: checked,
                                     })
                                 }
@@ -118,9 +120,7 @@ export function VisualizerSettings({
                         <p className="text-xs text-white/60">
                             Circle size responds to bass
                         </p>
-                    </div>
-
-                    <div className="flex flex-col gap-2">
+                    </div>                    <div className="flex flex-col gap-2">
                         <Label
                             className="text-xs font-semibold text-white/80 uppercase tracking-wide flex items-center justify-between"
                             htmlFor="smoothing"
@@ -143,10 +143,10 @@ export function VisualizerSettings({
                         >
                             <span>Auto-Rotate</span>
                             <Switch
-                                checked={config.autoRotate}
+                                checked={circularConfig.autoRotate}
                                 id="auto-rotate"
                                 onCheckedChange={(checked) =>
-                                    onChange({ ...config, autoRotate: checked })
+                                    updateCircularConfig({ autoRotate: checked })
                                 }
                             />
                         </Label>
@@ -155,13 +155,13 @@ export function VisualizerSettings({
                         </p>
                     </div>
 
-                    {config.autoRotate && (
+                    {circularConfig.autoRotate && (
                         <div className="flex flex-col gap-2">
                             <Label
                                 className="text-xs font-semibold text-white/80 uppercase tracking-wide"
                                 htmlFor="rotation-speed"
                             >
-                                Rotation Speed: {config.rotationSpeed.toFixed(1)}°/frame
+                                Rotation Speed: {circularConfig.rotationSpeed.toFixed(1)}°/frame
                             </Label>
                             <Slider
                                 className="w-full"
@@ -169,21 +169,18 @@ export function VisualizerSettings({
                                 max={0.6}
                                 min={0.1}
                                 onValueChange={(value) =>
-                                    onChange({
-                                        ...config,
+                                    updateCircularConfig({
                                         rotationSpeed: value[0],
                                     })
                                 }
                                 step={0.1}
-                                value={[config.rotationSpeed]}
+                                value={[circularConfig.rotationSpeed]}
                             />
                             <p className="text-xs text-white/60">
                                 Adjust rotation speed (0.1 = slow, 0.6 = fast)
                             </p>
                         </div>
-                    )}
-
-                    <div className="flex flex-col gap-2">
+                    )}                    <div className="flex flex-col gap-2">
                         <Label
                             className="text-xs font-semibold text-white/80 uppercase tracking-wide"
                             htmlFor="fade-amount"

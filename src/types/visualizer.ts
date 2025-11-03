@@ -191,6 +191,9 @@ export interface VisualizerConfig {
 	shape: VisualizerShape;
 	// Color config
 	colorScheme: ColorScheme;
+	// Common config (applies to all visualizer shapes)
+	fadeAmount: number; // Trail fade amount (0-1)
+	smoothing: boolean; // Enable frequency smoothing
 	// Circular specific config
 	circularConfig?: {
 		poles: number; // Number of bass poles (1 or 10)
@@ -199,29 +202,26 @@ export interface VisualizerConfig {
 		maxBarHeight: number; // Max bar height as percentage (0-1)
 		barCount: number; // Number of bars around circle
 		rotationOffset: number; // Rotation in degrees
+		bassResponseCircle: boolean; // Circle pulses with bass
+		autoRotate: boolean; // Auto-rotate the visualizer
+		rotationSpeed: number; // Rotation speed in degrees per frame (0.1-0.6)
 	};
-	// Common config
-	fadeAmount: number; // Trail fade amount (0-1)
-	smoothing: boolean; // Enable frequency smoothing
-	bassResponseCircle: boolean; // Circle pulses with bass
-	autoRotate: boolean; // Auto-rotate the visualizer
-	rotationSpeed: number; // Rotation speed in degrees per frame (0.1-2.0)
 }
 
 export const DEFAULT_CONFIG: VisualizerConfig = {
-	autoRotate: false,
-	bassResponseCircle: true,
 	circularConfig: {
+		autoRotate: false,
 		barCount: 360,
 		baseRadiusMax: 0.25,
 		baseRadiusMin: 0.1,
+		bassResponseCircle: true,
 		maxBarHeight: 0.35,
 		poles: 2,
 		rotationOffset: 130,
+		rotationSpeed: 0.1,
 	},
 	colorScheme: COLOR_PRESETS[0], // Default to white
 	fadeAmount: 0.5,
-	rotationSpeed: 0.1,
 	shape: "circular",
 	smoothing: true,
 };

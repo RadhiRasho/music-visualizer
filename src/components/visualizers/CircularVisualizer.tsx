@@ -22,6 +22,7 @@ export function CircularVisualizer({
         baseRadiusMax: 0.25,
         baseRadiusMin: 0.1,
         bassResponseCircle: true,
+        jaggedCircle: false,
         maxBarHeight: 0.35,
         poles: 2,
         rotationOffset: 130,
@@ -89,13 +90,7 @@ export function CircularVisualizer({
             const barCount = circularConfig.barCount;
             const angleStep = (Math.PI * 2) / barCount;
 
-            // Draw center circle (outer ring)
-            ctx.beginPath();
-            ctx.arc(centerX, centerY, baseRadius, 0, Math.PI * 2);
-            ctx.fillStyle = "rgba(0, 0, 0, 1)";
-            ctx.fill();
-
-            // Convert hex color to rgba
+            // Helper function to convert hex color to rgba
             const hexToRgba = (hex: string, alpha: number) => {
                 const r = Number.parseInt(hex.slice(1, 3), 16);
                 const g = Number.parseInt(hex.slice(3, 5), 16);
@@ -103,9 +98,83 @@ export function CircularVisualizer({
                 return `rgba(${r}, ${g}, ${b}, ${alpha})`;
             };
 
-            ctx.strokeStyle = hexToRgba(config.colorScheme.primary, 0.3);
-            ctx.lineWidth = 2;
-            ctx.stroke();
+            // Draw center circle (outer ring) - either smooth or jagged
+            if (circularConfig.jaggedCircle) {
+                // Jagged circle that pulses with frequency data aligned to poles
+                ctx.beginPath();
+                const jaggedPoints = 360; // More points for smoother curves
+                const jaggedAngleStep = (Math.PI * 2) / jaggedPoints;
+                const poles = circularConfig.poles;
+                const segmentsPerPole = jaggedPoints / poles;
+
+                // Apply same rotation as bars
+                const staticRotation = (circularConfig.rotationOffset * Math.PI) / 180;
+                const dynamicRotation = (rotationRef.current * Math.PI) / 180;
+
+                for (let i = 0; i <= jaggedPoints; i++) {
+                    // Calculate which segment we're in based on number of poles
+                    const positionInSegment = i % segmentsPerPole;
+                    const halfSegment = segmentsPerPole / 2;
+
+                    let normalizedPosition: number;
+                    if (positionInSegment < halfSegment) {
+                        // First half of segment: bass to highs
+                        normalizedPosition = positionInSegment / halfSegment;
+                    } else {
+                        // Second half of segment: highs back to bass
+                        normalizedPosition =
+                            (segmentsPerPole - positionInSegment) / halfSegment;
+                    }
+
+                    // Apply exponential scaling for better frequency spread (same as bars)
+                    const logScale = normalizedPosition ** 1.5;
+                    const dataIndex = Math.floor(logScale * (bufferLength * 0.7));
+
+                    // Apply smoothing for cleaner look
+                    let smoothIntensity: number;
+                    if (config.smoothing) {
+                        const prevIndex = Math.max(0, dataIndex - 1);
+                        const nextIndex = Math.min(bufferLength - 1, dataIndex + 1);
+                        smoothIntensity =
+                            (dataArray[prevIndex] +
+                                dataArray[dataIndex] * 2 +
+                                dataArray[nextIndex]) /
+                            (4 * 255);
+                    } else {
+                        smoothIntensity = dataArray[dataIndex] / 255;
+                    }
+
+                    // Create jagged effect: radius varies based on frequency
+                    // Poles (bass) will push out more, highs less
+                    const jaggedAmount = smoothIntensity * 0.2 * baseRadius; // Up to 20% variation
+                    const bassPulse = bassIntensity * baseRadius * 0.08; // Additional bass pulse
+                    const radius = baseRadius + jaggedAmount + bassPulse;
+
+                    // Apply rotation offset and dynamic rotation
+                    const angle = i * jaggedAngleStep + staticRotation + dynamicRotation;
+                    const x = centerX + Math.cos(angle) * radius;
+                    const y = centerY + Math.sin(angle) * radius;
+
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                ctx.closePath();
+                // No fill needed - just stroke the outline
+                ctx.strokeStyle = hexToRgba(config.colorScheme.primary, 0.6 + bassIntensity * 0.2);
+                ctx.lineWidth = 2 + bassIntensity * 1.5; // Line width pulses with bass
+                ctx.stroke();
+            } else {
+                // Smooth circle
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, baseRadius, 0, Math.PI * 2);
+                // No fill needed - just stroke the outline
+                ctx.strokeStyle = hexToRgba(config.colorScheme.primary, 0.3);
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
 
             // === FANCY INNER CIRCLE VISUALIZATION ===
 
@@ -257,14 +326,6 @@ export function CircularVisualizer({
 
                 // Draw bar with gradient effect
                 const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
-
-                // Convert hex colors to rgba
-                const hexToRgba = (hex: string, alpha: number) => {
-                    const r = Number.parseInt(hex.slice(1, 3), 16);
-                    const g = Number.parseInt(hex.slice(3, 5), 16);
-                    const b = Number.parseInt(hex.slice(5, 7), 16);
-                    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                };
 
                 gradient.addColorStop(
                     0,

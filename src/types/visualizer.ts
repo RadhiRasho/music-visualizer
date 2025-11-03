@@ -205,6 +205,7 @@ export interface VisualizerConfig {
 		bassResponseCircle: boolean; // Circle pulses with bass
 		autoRotate: boolean; // Auto-rotate the visualizer
 		rotationSpeed: number; // Rotation speed in degrees per frame (0.1-0.6)
+		jaggedCircle: boolean; // Make outer circle jagged and responsive to bass
 	};
 }
 
@@ -215,6 +216,7 @@ export const DEFAULT_CONFIG: VisualizerConfig = {
 		baseRadiusMax: 0.25,
 		baseRadiusMin: 0.1,
 		bassResponseCircle: true,
+		jaggedCircle: false,
 		maxBarHeight: 0.35,
 		poles: 2,
 		rotationOffset: 130,

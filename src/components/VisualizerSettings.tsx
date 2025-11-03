@@ -29,11 +29,26 @@ export function VisualizerSettings({
         rotationSpeed: 0.1,
     };
 
+    const barsConfig = config.barsConfig ?? {
+        barCount: 128,
+        poles: 1,
+    };
+
     const updateCircularConfig = (updates: Partial<typeof circularConfig>) => {
         onChange({
             ...config,
             circularConfig: {
                 ...circularConfig,
+                ...updates,
+            },
+        });
+    };
+
+    const updateBarsConfig = (updates: Partial<typeof barsConfig>) => {
+        onChange({
+            ...config,
+            barsConfig: {
+                ...barsConfig,
                 ...updates,
             },
         });
@@ -143,7 +158,9 @@ export function VisualizerSettings({
                                             <HelpCircleIcon className="w-3 h-3 text-white/40 hover:text-white/60 cursor-help" />
                                         </TooltipTrigger>
                                         <TooltipContent side="top">
-                                            <p>Make outer circle jagged and responsive to frequencies</p>
+                                            <p>
+                                                Make outer circle jagged and responsive to frequencies
+                                            </p>
                                         </TooltipContent>
                                     </Tooltip>
                                 </span>
@@ -300,6 +317,99 @@ export function VisualizerSettings({
                         </div>
                     </div>
                 </>
+            )}
+
+            {/* Bars specific settings */}
+            {config.shape === "bars" && (
+                <div className="space-y-3">
+                    <div className="flex flex-col gap-1">
+                        <Label
+                            className="text-xs font-semibold text-white/80 uppercase tracking-wide flex items-center gap-1"
+                            htmlFor="bars-poles"
+                        >
+                            Poles: {barsConfig.poles}
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <HelpCircleIcon className="w-3 h-3 text-white/40 hover:text-white/60 cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    <p>Number of sections (1-8: corners + midsections)</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </Label>
+                        <Slider
+                            className="w-full"
+                            id="bars-poles"
+                            max={16}
+                            min={8}
+                            onValueChange={(value) => updateBarsConfig({ poles: value[0] })}
+                            step={1}
+                            value={[barsConfig.poles]}
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <Label
+                            className="text-xs font-semibold text-white/80 uppercase tracking-wide flex items-center gap-1"
+                            htmlFor="bars-count"
+                        >
+                            Bar Count: {barsConfig.barCount}
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <HelpCircleIcon className="w-3 h-3 text-white/40 hover:text-white/60 cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    <p>Number of frequency bars per side (32 to 256)</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </Label>
+                        <Slider
+                            className="w-full"
+                            id="bars-count"
+                            max={256}
+                            min={32}
+                            onValueChange={(value) =>
+                                updateBarsConfig({ barCount: value[0] })
+                            }
+                            step={8}
+                            value={[barsConfig.barCount]}
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <Label
+                            className="text-xs font-semibold text-white/80 uppercase tracking-wide flex items-center gap-1"
+                            htmlFor="bars-fade-amount"
+                        >
+                            Trail Effect:{" "}
+                            {config.fadeAmount === 1
+                                ? "None"
+                                : `${(config.fadeAmount * 100).toFixed(0)}%`}
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <HelpCircleIcon className="w-3 h-3 text-white/40 hover:text-white/60 cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    <p>Lower = more trails/blur, 100% = no trails (crisp)</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </Label>
+                        <Slider
+                            className="w-full"
+                            id="bars-fade-amount"
+                            max={1}
+                            min={0.01}
+                            onValueChange={(value) =>
+                                onChange({
+                                    ...config,
+                                    fadeAmount: value[0],
+                                })
+                            }
+                            step={0.01}
+                            value={[config.fadeAmount]}
+                        />
+                    </div>
+                </div>
             )}
         </div>
     );

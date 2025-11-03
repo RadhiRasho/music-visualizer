@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { VisualizerConfig } from "../types/visualizer";
+import { BarsVisualizer } from "./visualizers/BarsVisualizer";
 import { CircularVisualizer } from "./visualizers/CircularVisualizer";
 
 interface VisualizerCanvasProps {
@@ -40,6 +41,14 @@ export function VisualizerCanvas({
             <canvas className="absolute inset-0 w-full h-full" ref={canvasRef} />
             {isListening && config.shape === "circular" && (
                 <CircularVisualizer
+                    analyserRef={analyserRef}
+                    canvasRef={canvasRef}
+                    config={config}
+                    dataArrayRef={dataArrayRef}
+                />
+            )}
+            {isListening && config.shape === "bars" && (
+                <BarsVisualizer
                     analyserRef={analyserRef}
                     canvasRef={canvasRef}
                     config={config}

@@ -44,10 +44,10 @@ export function ShapeSelector({ value, onChange }: ShapeSelectorProps) {
                             Circular
                         </span>
                     </SelectItem>
-                    <SelectItem disabled value="bars">
+                    <SelectItem value="bars">
                         <span className="flex items-center gap-2">
                             <BarChart3Icon className="w-4 h-4" />
-                            Bars (Coming Soon)
+                            Bars
                         </span>
                     </SelectItem>
                     <SelectItem disabled value="waveform">

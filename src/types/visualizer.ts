@@ -207,9 +207,18 @@ export interface VisualizerConfig {
 		rotationSpeed: number; // Rotation speed in degrees per frame (0.1-0.6)
 		jaggedCircle: boolean; // Make outer circle jagged and responsive to bass
 	};
+	// Bars specific config
+	barsConfig?: {
+		poles: number; // Number of visualization poles (1-8)
+		barCount: number; // Number of bars per side (1-256)
+	};
 }
 
 export const DEFAULT_CONFIG: VisualizerConfig = {
+	barsConfig: {
+		barCount: 128,
+		poles: 1,
+	},
 	circularConfig: {
 		autoRotate: false,
 		barCount: 360,

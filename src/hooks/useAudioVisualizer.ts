@@ -2,10 +2,23 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 type AudioSource = "microphone" | "tab" | "system" | "file";
 
+const AUDIO_SOURCE_KEY = "music-visualizer-audio-source";
+
 export function useAudioVisualizer() {
 	const [isListening, setIsListening] = useState(false);
 	const [error, setError] = useState<string>("");
-	const [audioSource, setAudioSource] = useState<AudioSource>("tab");
+	const [audioSource, setAudioSource] = useState<AudioSource>(() => {
+		// Load audio source from sessionStorage
+		try {
+			const stored = sessionStorage.getItem(AUDIO_SOURCE_KEY);
+			if (stored && ["microphone", "tab", "system", "file"].includes(stored)) {
+				return stored as AudioSource;
+			}
+		} catch (error) {
+			console.error("Failed to load audio source from sessionStorage:", error);
+		}
+		return "tab";
+	});
 	const [browserWarning, setBrowserWarning] = useState<string>("");
 
 	const audioContextRef = useRef<AudioContext | null>(null);
@@ -16,6 +29,15 @@ export function useAudioVisualizer() {
 	>(null);
 	const streamRef = useRef<MediaStream | null>(null);
 	const audioElementRef = useRef<HTMLAudioElement | null>(null);
+
+	// Save audio source to sessionStorage whenever it changes
+	useEffect(() => {
+		try {
+			sessionStorage.setItem(AUDIO_SOURCE_KEY, audioSource);
+		} catch (error) {
+			console.error("Failed to save audio source to sessionStorage:", error);
+		}
+	}, [audioSource]);
 
 	// Check browser compatibility
 	useEffect(() => {

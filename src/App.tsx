@@ -5,7 +5,6 @@ import {
   MusicIcon,
   SettingsIcon,
 } from "lucide-react";
-import { useState } from "react";
 import { AudioControls } from "./components/AudioControls";
 import { ErrorMessage } from "./components/ErrorMessage";
 import { Instructions } from "./components/Instructions";
@@ -28,7 +27,7 @@ import {
 import { VisualizerCanvas } from "./components/VisualizerCanvas";
 import { VisualizerSettings } from "./components/VisualizerSettings";
 import { useAudioVisualizer } from "./hooks/useAudioVisualizer";
-import { DEFAULT_CONFIG, type VisualizerConfig } from "./types/visualizer";
+import { useConfigStorage } from "./hooks/useConfigStorage";
 
 function AppContent() {
   const {
@@ -44,7 +43,7 @@ function AppContent() {
     dataArrayRef,
   } = useAudioVisualizer();
 
-  const [config, setConfig] = useState<VisualizerConfig>(DEFAULT_CONFIG);
+  const [config, setConfig] = useConfigStorage();
   const { toggleSidebar, open } = useSidebar();
 
   return (

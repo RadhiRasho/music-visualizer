@@ -1,12 +1,13 @@
 import {
     AlertTriangleIcon,
+    AudioLinesIcon,
     FileAudioIcon,
-    FolderOpenIcon,
     MicIcon,
     MonitorIcon,
     MusicIcon,
     PlayIcon,
     SquareIcon,
+    UploadIcon,
 } from "lucide-react";
 import type { ChangeEvent } from "react";
 import { Button } from "./ui/button";
@@ -66,12 +67,6 @@ export function AudioControls({
                             position="popper"
                             sideOffset={5}
                         >
-                            <SelectItem value="file">
-                                <span className="flex items-center gap-2">
-                                    <FileAudioIcon className="w-4 h-4" />
-                                    Audio File (Works in Firefox!)
-                                </span>
-                            </SelectItem>
                             <SelectItem value="tab">
                                 <span className="flex items-center gap-2">
                                     <MusicIcon className="w-4 h-4" />
@@ -90,6 +85,12 @@ export function AudioControls({
                                     Microphone
                                 </span>
                             </SelectItem>
+                            <SelectItem value="file">
+                                <span className="flex items-center gap-2">
+                                    <FileAudioIcon className="w-4 h-4" />
+                                    Audio File (Firefox)
+                                </span>
+                            </SelectItem>
                         </SelectContent>
                     </Select>
 
@@ -97,21 +98,21 @@ export function AudioControls({
                         <>
                             {!isListening ? (
                                 <Label
-                                    className="inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 font-bold bg-white text-black hover:bg-white/90 cursor-pointer transition-all duration-200 flex-shrink-0"
+                                    className="inline-flex items-center justify-center gap-2 rounded-lg px-2 py-2.5 font-bold bg-white text-black hover:bg-white/90 cursor-pointer transition-colors shrink-0"
                                     htmlFor="audio-file"
                                 >
-                                    <FolderOpenIcon className="w-5 h-5" />
-                                    Choose File
+                                    <UploadIcon className="w-5 h-5" />
+                                    Upload
                                 </Label>
                             ) : (
                                 <Button
-                                    className="rounded-lg px-4 py-2 bg-white/20 hover:bg-white/30 font-bold border border-white/30 shrink-0"
+                                    className="inline-flex items-center justify-center gap-2 rounded-lg px-6 py-2.5 font-bold bg-white/20 border border-white/30 text-white hover:bg-white/30 shrink-0"
                                     onClick={onStop}
                                     type="button"
                                     variant="ghost"
                                 >
-                                    <SquareIcon className="w-4 h-4 mr-1" />
-                                    Stop
+                                    <SquareIcon className="w-5 h-5" />
+                                    <span>Stop</span>
                                 </Button>
                             )}
                             <input
@@ -122,27 +123,25 @@ export function AudioControls({
                                 type="file"
                             />
                         </>
+                    ) : !isListening ? (
+                        <Button
+                            className="inline-flex items-center justify-center gap-2 rounded-lg px-6 py-2.5 font-bold bg-white text-black hover:bg-white/90 shrink-0"
+                            onClick={onStart}
+                            type="button"
+                        >
+                            <PlayIcon className="w-5 h-5" />
+                            <span>Start</span>
+                        </Button>
                     ) : (
-                        !isListening ? (
-                            <Button
-                                className="inline-flex items-center justify-center gap-2 rounded-lg px-6 py-2.5 font-bold bg-white text-black hover:bg-white/90 shrink-0"
-                                onClick={onStart}
-                                type="button"
-                            >
-                                <PlayIcon className="w-5 h-5" />
-                                <span>Start</span>
-                            </Button>
-                        ) : (
-                            <Button
-                                className="inline-flex items-center justify-center gap-2 rounded-lg px-6 py-2.5 font-bold bg-white/20 border border-white/30 text-white hover:bg-white/30 shrink-0"
-                                onClick={onStop}
-                                type="button"
-                                variant="ghost"
-                            >
-                                <SquareIcon className="w-5 h-5" />
-                                <span>Stop</span>
-                            </Button>
-                        )
+                        <Button
+                            className="inline-flex items-center justify-center gap-2 rounded-lg px-6 py-2.5 font-bold bg-white/20 border border-white/30 text-white hover:bg-white/30 shrink-0"
+                            onClick={onStop}
+                            type="button"
+                            variant="ghost"
+                        >
+                            <SquareIcon className="w-5 h-5" />
+                            <span>Stop</span>
+                        </Button>
                     )}
                 </div>
                 {browserWarning && (
@@ -155,7 +154,7 @@ export function AudioControls({
 
             {audioSource === "file" && isListening && (
                 <div className="text-white/90 font-semibold text-sm flex items-center gap-2">
-                    <MusicIcon className="w-4 h-4" />
+                    <AudioLinesIcon className="w-4 h-4" />
                     Playing...
                 </div>
             )}

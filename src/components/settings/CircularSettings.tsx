@@ -1,5 +1,5 @@
 import { HelpCircleIcon } from "lucide-react";
-import type { VisualizerConfig } from "../../types/visualizer";
+import { DEFAULT_CONFIG, type VisualizerConfig } from "../../types/visualizer";
 import { Label } from "../ui/label";
 import { Slider } from "../ui/slider";
 import { Switch } from "../ui/switch";
@@ -12,18 +12,7 @@ export default function CircularSettings({
     config: VisualizerConfig;
     onChange: (config: VisualizerConfig) => void;
 }) {
-    const circularConfig = config.circularConfig ?? {
-        autoRotate: false,
-        barCount: 360,
-        baseRadiusMax: 0.25,
-        baseRadiusMin: 0.1,
-        bassResponseCircle: true,
-        jaggedCircle: false,
-        maxBarHeight: 0.35,
-        poles: 2,
-        rotationOffset: 130,
-        rotationSpeed: 0.1,
-    };
+    const circularConfig = config.circularConfig ?? (DEFAULT_CONFIG.circularConfig as NonNullable<VisualizerConfig["circularConfig"]>);
 
     const updateCircularConfig = (updates: Partial<typeof circularConfig>) => {
         onChange({

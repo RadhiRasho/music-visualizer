@@ -34,6 +34,7 @@ export function BarsVisualizer({
         barCount: 128,
         barLength: 0.9,
         bassPulse: true,
+        frequencyRange: "full" as const,
         gradient: true,
         mirrorMode: false,
         poles: 4,
@@ -57,7 +58,7 @@ export function BarsVisualizer({
             // @ts-expect-error Uint8Array typing mismatch in TS DOM lib
             analyser.getByteFrequencyData(dataArray);
 
-            // Calculate bass level for reactive effects
+            // Calculate bass level for bass pulse effects
             const bassEnd = Math.floor(bufferLength * 0.1);
             let bassSum = 0;
             for (let i = 0; i < bassEnd; i++) {
@@ -65,13 +66,15 @@ export function BarsVisualizer({
             }
             const bassLevel = bassSum / bassEnd / 255;
 
-            // Apply trail effect with fade (reactive if enabled)
-            let fadeAmount = config.fadeAmount;
-            if (barsConfig.reactiveFade) {
-                // Reduce fade when bass is high (more trails on heavy bass)
-                fadeAmount = config.fadeAmount * (1 - bassLevel * 0.5);
+            // Calculate overall audio energy for reactive brightness
+            let totalEnergy = 0;
+            for (let i = 0; i < bufferLength; i++) {
+                totalEnergy += dataArray[i];
             }
-            ctx.fillStyle = hexToRgba("#000000", fadeAmount);
+            const energyLevel = totalEnergy / bufferLength / 255;
+
+            // Apply trail effect
+            ctx.fillStyle = hexToRgba("#000000", config.fadeAmount);
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             const barCount = Math.min(bufferLength, barsConfig.barCount);
@@ -123,18 +126,43 @@ export function BarsVisualizer({
                             break;
                     }
 
+                    // Determine frequency range to sample from
+                    let rangeStart = 0;
+                    let rangeEnd = bufferLength;
+                    switch (barsConfig.frequencyRange) {
+                        case "bass":
+                            rangeStart = 0;
+                            rangeEnd = Math.floor(bufferLength * 0.15); // 0-15% (roughly 0-250Hz)
+                            break;
+                        case "mids":
+                            rangeStart = Math.floor(bufferLength * 0.15);
+                            rangeEnd = Math.floor(bufferLength * 0.5); // 15-50% (roughly 250-2000Hz)
+                            break;
+                        case "highs":
+                            rangeStart = Math.floor(bufferLength * 0.5);
+                            rangeEnd = bufferLength; // 50-100% (roughly 2000Hz+)
+                            break;
+                        case "full":
+                        default:
+                            rangeStart = 0;
+                            rangeEnd = bufferLength;
+                            break;
+                    }
+                    const rangeSize = rangeEnd - rangeStart;
+
                     // Sample from frequency data - mirror mode or centered distribution
                     let dataIndex: number;
                     if (barsConfig.mirrorMode) {
                         // Mirror mode: symmetric from edges inward (0 at edges, high at center)
                         const mirrorPosition = Math.abs(i / barCount - 0.5) * 2;
-                        dataIndex = Math.floor(mirrorPosition * bufferLength * 0.7);
+                        dataIndex =
+                            rangeStart + Math.floor(mirrorPosition * rangeSize * 0.7);
                     } else {
                         // Centered mode: bass at center, highs spread outward (current behavior)
                         const distanceFromCenter = Math.abs(i - barCount / 2);
-                        dataIndex = Math.floor(
-                            (distanceFromCenter * 2 * bufferLength) / barCount,
-                        );
+                        dataIndex =
+                            rangeStart +
+                            Math.floor((distanceFromCenter * 2 * rangeSize) / barCount);
                     }
                     const value = dataArray[Math.min(dataIndex, bufferLength - 1)];
                     const normalizedHeight = value / 255;
@@ -165,7 +193,14 @@ export function BarsVisualizer({
                     const endY = barY + Math.sin(angle) * barLength;
 
                     // Use globalAlpha for performance (avoid alpha in color strings)
-                    const alpha = Math.min(0.9, normalizedHeight * 0.8 + bassLevel * 0.2);
+                    let alpha = Math.min(0.9, normalizedHeight * 0.8 + bassLevel * 0.2);
+
+                    // Reactive brightness: boost opacity when music is loud
+                    if (barsConfig.reactiveFade) {
+                        const brightnessBoost = energyLevel * 0.6; // Up to 60% brighter on loud music
+                        alpha = Math.min(1.0, alpha + brightnessBoost);
+                    }
+
                     ctx.globalAlpha = alpha;
 
                     // Conditional gradient rendering based on user preference
@@ -227,6 +262,7 @@ export function BarsVisualizer({
         barsConfig.gradient,
         barsConfig.bassPulse,
         barsConfig.mirrorMode,
+        barsConfig.frequencyRange,
     ]);
 
     return null;

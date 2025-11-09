@@ -146,8 +146,8 @@ export function CircularVisualizer({
 
                     // Create jagged effect: radius varies based on frequency
                     // Poles (bass) will push out more, highs less
-                    const jaggedAmount = smoothIntensity * 0.2 * baseRadius; // Up to 20% variation
-                    const bassPulse = bassIntensity * baseRadius * 0.08; // Additional bass pulse
+                    const jaggedAmount = smoothIntensity * 0.6 * baseRadius; // Up to 60% variation (more intense)
+                    const bassPulse = bassIntensity * baseRadius * 0.25; // Additional bass pulse (25% max pulse)
                     const radius = baseRadius + jaggedAmount + bassPulse;
 
                     // Apply rotation offset and dynamic rotation
@@ -163,8 +163,8 @@ export function CircularVisualizer({
                 }
                 ctx.closePath();
                 // No fill needed - just stroke the outline
-                ctx.strokeStyle = hexToRgba(config.colorScheme.primary, 0.6 + bassIntensity * 0.2);
-                ctx.lineWidth = 2 + bassIntensity * 1.5; // Line width pulses with bass
+                ctx.strokeStyle = hexToRgba(config.colorScheme.primary, 0.8 + bassIntensity * 0.2);
+                ctx.lineWidth = 4 + bassIntensity * 4; // Line width pulses with bass (4-8px range)
                 ctx.stroke();
             } else {
                 // Smooth circle

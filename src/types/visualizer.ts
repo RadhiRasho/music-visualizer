@@ -211,12 +211,14 @@ export interface VisualizerConfig {
 	barsConfig?: {
 		poles: number; // Number of visualization poles (1-8)
 		barCount: number; // Number of bars per side (1-256)
+		barLength: number; // Max bar length as percentage of distance to center (0-1)
 	};
 }
 
 export const DEFAULT_CONFIG: VisualizerConfig = {
 	barsConfig: {
 		barCount: 128,
+		barLength: 0.9,
 		poles: 1,
 	},
 	circularConfig: {

@@ -219,7 +219,7 @@ export const DEFAULT_CONFIG: VisualizerConfig = {
 	barsConfig: {
 		barCount: 128,
 		barLength: 0.9,
-		poles: 1,
+		poles: 4,
 	},
 	circularConfig: {
 		autoRotate: false,

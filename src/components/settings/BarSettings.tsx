@@ -14,7 +14,7 @@ export default function BarSettings({
     const barsConfig = config.barsConfig ?? {
         barCount: 128,
         barLength: 0.9,
-        poles: 8,
+        poles: 4,
     };
 
     const updateBarsConfig = (updates: Partial<typeof barsConfig>) => {
@@ -28,6 +28,32 @@ export default function BarSettings({
     };
     return (
         <div className="space-y-3">
+            <div className="flex flex-col gap-1">
+                <Label
+                    className="text-xs font-semibold text-white/80 uppercase tracking-wide flex items-center gap-1"
+                    htmlFor="bars-poles"
+                >
+                    Poles: {barsConfig.poles}
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <HelpCircleIcon className="w-3 h-3 text-white/40 hover:text-white/60 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                            <p>Number of visualization sections (1-12: edges + corners)</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </Label>
+                <Slider
+                    className="w-full"
+                    id="bars-poles"
+                    max={12}
+                    min={1}
+                    onValueChange={(value) => updateBarsConfig({ poles: value[0] })}
+                    step={1}
+                    value={[barsConfig.poles]}
+                />
+            </div>
+
             <div className="flex flex-col gap-1">
                 <Label
                     className="text-xs font-semibold text-white/80 uppercase tracking-wide flex items-center gap-1"

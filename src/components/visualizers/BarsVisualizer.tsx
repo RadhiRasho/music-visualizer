@@ -84,8 +84,10 @@ export function BarsVisualizer({
             const barWidthVertical = Math.max(2, (screenCenterY / barCount) * 1.05);
             const barWidthDiagonal = Math.max(2, (Math.min(screenCenterX, screenCenterY) / barCount) * 1.05);
 
+            const poles = barsConfig.poles;
+
             // Draw bars on all four sides + 8 corners (12 total)
-            for (let side = 0; side < 12; side++) {
+            for (let side = 0; side < Math.min(poles, 12); side++) {
                 const barWidth = side < 4
                     ? ((side === 0 || side === 2) ? barWidthHorizontal : barWidthVertical)
                     : barWidthDiagonal;
@@ -102,13 +104,13 @@ export function BarsVisualizer({
                             barX = screenCenterX - offset * screenCenterX;
                             barY = canvas.height;
                             break;
-                        case 1: // Left edge
-                            barX = 0;
-                            barY = screenCenterY + offset * screenCenterY;
-                            break;
-                        case 2: // Top edge
+                        case 1: // Top edge
                             barX = screenCenterX + offset * screenCenterX;
                             barY = 0;
+                            break;
+                        case 2: // Left edge
+                            barX = 0;
+                            barY = screenCenterY + offset * screenCenterY;
                             break;
                         case 3: // Right edge
                             barX = canvas.width;
@@ -210,6 +212,7 @@ export function BarsVisualizer({
         canvasRef,
         barsConfig.barCount,
         barsConfig.barLength,
+        barsConfig.poles,
     ]);
 
     return null;

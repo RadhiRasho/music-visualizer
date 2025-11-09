@@ -209,12 +209,13 @@ export interface VisualizerConfig {
 	};
 	// Bars specific config
 	barsConfig?: {
-		poles: number; // Number of visualization poles (1-12)
+		poles: number; // Number of visualization poles (1-4: bottom, top, left, right)
 		barCount: number; // Number of bars per side (1-256)
 		barLength: number; // Max bar length as percentage of distance to center (0-1)
-		useGradient: boolean; // Use gradient along bars (primary to secondary)
 		reactiveFade: boolean; // Fade amount pulses with bass
-		colorThreshold: number; // Threshold for secondary color (0-1)
+		gradient: boolean; // Enable color gradients on bars (performance impact: reduce bar count if FPS drops)
+		bassPulse: boolean; // Bars extend outward on bass hits for dramatic effect
+		mirrorMode: boolean; // Mirror bars symmetrically from edges inward instead of bass at center
 	};
 }
 
@@ -222,10 +223,11 @@ export const DEFAULT_CONFIG: VisualizerConfig = {
 	barsConfig: {
 		barCount: 128,
 		barLength: 0.9,
-		colorThreshold: 0.1,
+		bassPulse: true,
+		gradient: true,
+		mirrorMode: false,
 		poles: 4,
 		reactiveFade: false,
-		useGradient: false,
 	},
 	circularConfig: {
 		autoRotate: false,

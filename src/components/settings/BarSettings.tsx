@@ -1,5 +1,6 @@
-import { HelpCircleIcon } from "lucide-react";
+import { BadgeInfoIcon, HelpCircleIcon } from "lucide-react";
 import type { VisualizerConfig } from "@/types/visualizer";
+import { Alert, AlertDescription } from "../ui/alert";
 import { Label } from "../ui/label";
 import { Slider } from "../ui/slider";
 import { Switch } from "../ui/switch";
@@ -15,10 +16,11 @@ export default function BarSettings({
     const barsConfig = config.barsConfig ?? {
         barCount: 128,
         barLength: 0.9,
-        colorThreshold: 0.1,
+        bassPulse: true,
+        gradient: true,
+        mirrorMode: false,
         poles: 4,
         reactiveFade: false,
-        useGradient: false,
     };
 
     const updateBarsConfig = (updates: Partial<typeof barsConfig>) => {
@@ -43,14 +45,14 @@ export default function BarSettings({
                             <HelpCircleIcon className="w-3 h-3 text-white/40 hover:text-white/60 cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent side="top">
-                            <p>Number of visualization sections (1-12: edges + corners)</p>
+                            <p>Number of visualization sections (1-4: bottom, top, left, right)</p>
                         </TooltipContent>
                     </Tooltip>
                 </Label>
                 <Slider
                     className="w-full"
                     id="bars-poles"
-                    max={12}
+                    max={4}
                     min={1}
                     onValueChange={(value) => updateBarsConfig({ poles: value[0] })}
                     step={1}
@@ -149,32 +151,6 @@ export default function BarSettings({
                 <div className="flex flex-col gap-1">
                     <Label
                         className="text-xs font-semibold text-white/80 uppercase tracking-wide flex items-center justify-between"
-                        htmlFor="use-gradient"
-                    >
-                        <span className="flex items-center gap-1">
-                            Gradient
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <HelpCircleIcon className="w-3 h-3 text-white/40 hover:text-white/60 cursor-help" />
-                                </TooltipTrigger>
-                                <TooltipContent side="top">
-                                    <p>Use gradient along bars (may reduce FPS)</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </span>
-                        <Switch
-                            checked={barsConfig.useGradient}
-                            id="use-gradient"
-                            onCheckedChange={(checked) =>
-                                updateBarsConfig({ useGradient: checked })
-                            }
-                        />
-                    </Label>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                    <Label
-                        className="text-xs font-semibold text-white/80 uppercase tracking-wide flex items-center justify-between"
                         htmlFor="reactive-fade"
                     >
                         <span className="flex items-center gap-1">
@@ -197,36 +173,96 @@ export default function BarSettings({
                         />
                     </Label>
                 </div>
+
+                <div className="flex flex-col gap-1">
+                    <Label
+                        className="text-xs font-semibold text-white/80 uppercase tracking-wide flex items-center justify-between"
+                        htmlFor="gradient-bars"
+                    >
+                        <span className="flex items-center gap-1">
+                            Gradient
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <HelpCircleIcon className="w-3 h-3 text-white/40 hover:text-white/60 cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    <p>Color gradient on bars (impacts performance)</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </span>
+                        <Switch
+                            checked={barsConfig.gradient}
+                            id="gradient-bars"
+                            onCheckedChange={(checked) =>
+                                updateBarsConfig({ gradient: checked })
+                            }
+                        />
+                    </Label>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                    <Label
+                        className="text-xs font-semibold text-white/80 uppercase tracking-wide flex items-center justify-between"
+                        htmlFor="bass-pulse"
+                    >
+                        <span className="flex items-center gap-1">
+                            Bass Pulse
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <HelpCircleIcon className="w-3 h-3 text-white/40 hover:text-white/60 cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    <p>Bars extend outward on bass hits</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </span>
+                        <Switch
+                            checked={barsConfig.bassPulse}
+                            id="bass-pulse"
+                            onCheckedChange={(checked) =>
+                                updateBarsConfig({ bassPulse: checked })
+                            }
+                        />
+                    </Label>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                    <Label
+                        className="text-xs font-semibold text-white/80 uppercase tracking-wide flex items-center justify-between"
+                        htmlFor="mirror-mode"
+                    >
+                        <span className="flex items-center gap-1">
+                            Mirror Mode
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <HelpCircleIcon className="w-3 h-3 text-white/40 hover:text-white/60 cursor-help" />
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    <p>Symmetric bars from edges inward</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </span>
+                        <Switch
+                            checked={barsConfig.mirrorMode}
+                            id="mirror-mode"
+                            onCheckedChange={(checked) =>
+                                updateBarsConfig({ mirrorMode: checked })
+                            }
+                        />
+                    </Label>
+                </div>
             </div>
 
-            {/* Color Threshold */}
-            <div className="flex flex-col gap-1">
-                <Label
-                    className="text-xs font-semibold text-white/80 uppercase tracking-wide flex items-center gap-1"
-                    htmlFor="color-threshold"
-                >
-                    Secondary Color Threshold: {(barsConfig.colorThreshold * 100).toFixed(0)}%
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <HelpCircleIcon className="w-3 h-3 text-white/40 hover:text-white/60 cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent side="top">
-                            <p>Bar length threshold for secondary color to appear</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </Label>
-                <Slider
-                    className="w-full"
-                    id="color-threshold"
-                    max={0.5}
-                    min={0.05}
-                    onValueChange={(value) =>
-                        updateBarsConfig({ colorThreshold: value[0] })
-                    }
-                    step={0.05}
-                    value={[barsConfig.colorThreshold]}
-                />
-            </div>
+            {/* Performance Warning */}
+            {barsConfig.gradient && barsConfig.barCount > 128 && (
+                <Alert className="bg-yellow-500/10 border-yellow-500/30 text-yellow-200">
+                    <BadgeInfoIcon />
+                    <AlertDescription className="text-xs">
+                        Performance Impact: Gradients with high bar count may reduce FPS.
+                        Try lowering bar count to 64-96 for better performance.
+                    </AlertDescription>
+                </Alert>
+            )}
         </div>
     );
 }

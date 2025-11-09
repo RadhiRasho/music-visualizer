@@ -23,18 +23,6 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
     };
 }
 
-function lerpColor(
-    color1: { r: number; g: number; b: number },
-    color2: { r: number; g: number; b: number },
-    t: number,
-    alpha: number,
-): string {
-    const r = Math.round(color1.r + (color2.r - color1.r) * t);
-    const g = Math.round(color1.g + (color2.g - color1.g) * t);
-    const b = Math.round(color1.b + (color2.b - color1.b) * t);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
 export function BarsVisualizer({
     analyserRef,
     dataArrayRef,
@@ -45,10 +33,11 @@ export function BarsVisualizer({
     const barsConfig = config.barsConfig ?? {
         barCount: 128,
         barLength: 0.9,
-        colorThreshold: 0.1,
-        poles: 8,
+        bassPulse: true,
+        gradient: true,
+        mirrorMode: false,
+        poles: 4,
         reactiveFade: false,
-        useGradient: false,
     };
 
     useEffect(() => {
@@ -91,23 +80,23 @@ export function BarsVisualizer({
             const primaryColor = hexToRgb(config.colorScheme.primary);
             const secondaryColor = hexToRgb(config.colorScheme.secondary);
 
+            // Pre-calculate color strings for performance (use with globalAlpha)
+            const primaryRgb = `rgb(${primaryColor.r}, ${primaryColor.g}, ${primaryColor.b})`;
+            const secondaryRgb = `rgb(${secondaryColor.r}, ${secondaryColor.g}, ${secondaryColor.b})`;
+
             // Center of the screen
             const screenCenterX = canvas.width / 2;
             const screenCenterY = canvas.height / 2;
 
-            // Bar width calculation (use smaller dimension for consistent width)
-            const barWidthHorizontal = Math.max(2, (screenCenterX / barCount) * 1.05);
-            const barWidthVertical = Math.max(2, (screenCenterY / barCount) * 1.05);
-            const barWidthDiagonal = Math.max(2, (Math.min(screenCenterX, screenCenterY) / barCount) * 1.05);
+            // Bar width calculation - use consistent width for all poles
+            // Use the smaller dimension to ensure bars fit on all sides
+            const minDimension = Math.min(screenCenterX, screenCenterY);
+            const barWidth = Math.max(2, (minDimension / barCount) * 1.05);
 
             const poles = barsConfig.poles;
 
-            // Draw bars on all four sides + 8 corners (12 total)
-            for (let side = 0; side < Math.min(poles, 12); side++) {
-                const barWidth = side < 4
-                    ? ((side === 0 || side === 2) ? barWidthHorizontal : barWidthVertical)
-                    : barWidthDiagonal;
-
+            // Draw bars on four sides (bottom, top, left, right)
+            for (let side = 0; side < Math.min(poles, 4); side++) {
                 for (let i = 0; i < barCount; i++) {
                     // Calculate position along the edge
                     // Center the distribution: bass at center, mid/treble spread outward
@@ -132,102 +121,89 @@ export function BarsVisualizer({
                             barX = canvas.width;
                             barY = screenCenterY - offset * screenCenterY;
                             break;
-                        case 4: // Bottom-left corner - extend from left edge at bottom
-                            barX = 0;
-                            barY = canvas.height - Math.abs(offset) * screenCenterY;
-                            break;
-                        case 5: // Top-left corner - extend from left edge at top
-                            barX = 0;
-                            barY = Math.abs(offset) * screenCenterY;
-                            break;
-                        case 6: // Top-right corner - extend from right edge at top
-                            barX = canvas.width;
-                            barY = Math.abs(offset) * screenCenterY;
-                            break;
-                        case 7: // Bottom-right corner - extend from right edge at bottom
-                            barX = canvas.width;
-                            barY = canvas.height - Math.abs(offset) * screenCenterY;
-                            break;
-                        case 8: // Bottom-left corner - extend from bottom edge at left
-                            barX = Math.abs(offset) * screenCenterX;
-                            barY = canvas.height;
-                            break;
-                        case 9: // Bottom-right corner - extend from bottom edge at right
-                            barX = canvas.width - Math.abs(offset) * screenCenterX;
-                            barY = canvas.height;
-                            break;
-                        case 10: // Top-left corner - extend from top edge at left
-                            barX = Math.abs(offset) * screenCenterX;
-                            barY = 0;
-                            break;
-                        case 11: // Top-right corner - extend from top edge at right
-                            barX = canvas.width - Math.abs(offset) * screenCenterX;
-                            barY = 0;
-                            break;
                     }
 
-                    // Sample from frequency data with centered distribution
-                    const distanceFromCenter = Math.abs(i - barCount / 2);
-                    const dataIndex = Math.floor(
-                        (distanceFromCenter * 2 * bufferLength) / barCount,
-                    );
+                    // Sample from frequency data - mirror mode or centered distribution
+                    let dataIndex: number;
+                    if (barsConfig.mirrorMode) {
+                        // Mirror mode: symmetric from edges inward (0 at edges, high at center)
+                        const mirrorPosition = Math.abs(i / barCount - 0.5) * 2;
+                        dataIndex = Math.floor(mirrorPosition * bufferLength * 0.7);
+                    } else {
+                        // Centered mode: bass at center, highs spread outward (current behavior)
+                        const distanceFromCenter = Math.abs(i - barCount / 2);
+                        dataIndex = Math.floor(
+                            (distanceFromCenter * 2 * bufferLength) / barCount,
+                        );
+                    }
                     const value = dataArray[Math.min(dataIndex, bufferLength - 1)];
                     const normalizedHeight = value / 255;
 
-                    // Skip bars with no amplitude for performance
-                    if (normalizedHeight < 0.01) continue;
+                    // More aggressive culling for performance (skip bars < 3%)
+                    if (normalizedHeight < 0.03) continue;
 
                     // Calculate bar length (shooting toward center)
                     const dx = screenCenterX - barX;
                     const dy = screenCenterY - barY;
                     const distanceToCenter = Math.sqrt(dx * dx + dy * dy);
                     const minLength = distanceToCenter * 0.05;
-                    const maxLength = distanceToCenter * barsConfig.barLength;
+                    let maxLength = distanceToCenter * barsConfig.barLength;
+
+                    // Bass pulse effect: extend bars outward on heavy bass
+                    if (barsConfig.bassPulse) {
+                        maxLength += distanceToCenter * bassLevel * 0.2; // Up to 20% extension on max bass
+                    }
+
                     const barLength =
                         minLength + normalizedHeight * (maxLength - minLength);
 
                     // Calculate angle pointing towards screen center (reuse dx, dy)
                     const angle = Math.atan2(dy, dx);
 
-                    // Calculate color/gradient
-                    const alpha = normalizedHeight * 0.8;
-                    const thresholdLength = maxLength * barsConfig.colorThreshold;
+                    // Calculate end point of the bar
+                    const endX = barX + Math.cos(angle) * barLength;
+                    const endY = barY + Math.sin(angle) * barLength;
 
-                    if (barsConfig.useGradient) {
-                        // Use gradient from base to tip
-                        const gradient = ctx.createLinearGradient(0, 0, barLength, 0);
-                        gradient.addColorStop(0, lerpColor(primaryColor, primaryColor, 0, alpha));
+                    // Use globalAlpha for performance (avoid alpha in color strings)
+                    const alpha = Math.min(0.9, normalizedHeight * 0.8 + bassLevel * 0.2);
+                    ctx.globalAlpha = alpha;
 
-                        if (barLength > thresholdLength) {
-                            const thresholdStop = thresholdLength / barLength;
-                            gradient.addColorStop(thresholdStop, lerpColor(primaryColor, primaryColor, 0, alpha));
-                            const blendAmount = (barLength - thresholdLength) / (maxLength - thresholdLength);
-                            gradient.addColorStop(1, lerpColor(primaryColor, secondaryColor, blendAmount, alpha));
-                        } else {
-                            gradient.addColorStop(1, lerpColor(primaryColor, primaryColor, 0, alpha));
-                        }
-
-                        ctx.fillStyle = gradient;
+                    // Conditional gradient rendering based on user preference
+                    if (barsConfig.gradient) {
+                        // Create gradient - smooth color transition (performance cost)
+                        const gradient = ctx.createLinearGradient(barX, barY, endX, endY);
+                        gradient.addColorStop(0, primaryRgb);
+                        gradient.addColorStop(1, secondaryRgb);
+                        ctx.strokeStyle = gradient;
                     } else {
-                        // Use solid color based on bar extension
-                        let fillColor: string;
-                        if (barLength > thresholdLength) {
-                            const blendAmount = (barLength - thresholdLength) / (maxLength - thresholdLength);
-                            fillColor = lerpColor(primaryColor, secondaryColor, blendAmount, alpha);
-                        } else {
-                            fillColor = lerpColor(primaryColor, primaryColor, 0, alpha);
-                        }
-                        ctx.fillStyle = fillColor;
+                        // Solid color blended by intensity - much faster than gradients
+                        // Blend from primary (low intensity) to secondary (high intensity)
+                        const r = Math.round(
+                            primaryColor.r +
+                            (secondaryColor.r - primaryColor.r) * normalizedHeight,
+                        );
+                        const g = Math.round(
+                            primaryColor.g +
+                            (secondaryColor.g - primaryColor.g) * normalizedHeight,
+                        );
+                        const b = Math.round(
+                            primaryColor.b +
+                            (secondaryColor.b - primaryColor.b) * normalizedHeight,
+                        );
+                        ctx.strokeStyle = `rgb(${r}, ${g}, ${b})`;
                     }
 
-                    // Draw bar as a rectangle pointing towards center
-                    ctx.save();
-                    ctx.translate(barX, barY);
-                    ctx.rotate(angle);
-                    ctx.fillRect(0, -barWidth / 2, barLength, barWidth);
-                    ctx.restore();
+                    // Draw as stroke (fast rendering)
+                    ctx.lineWidth = barWidth;
+                    ctx.beginPath();
+                    ctx.moveTo(barX, barY);
+                    ctx.lineTo(endX, endY);
+                    ctx.stroke();
                 }
             }
+
+            // Reset globalAlpha to default
+            ctx.globalAlpha = 1.0;
 
             animationIdRef.current = requestAnimationFrame(draw);
         };
@@ -247,9 +223,10 @@ export function BarsVisualizer({
         barsConfig.barCount,
         barsConfig.barLength,
         barsConfig.poles,
-        barsConfig.useGradient,
         barsConfig.reactiveFade,
-        barsConfig.colorThreshold,
+        barsConfig.gradient,
+        barsConfig.bassPulse,
+        barsConfig.mirrorMode,
     ]);
 
     return null;

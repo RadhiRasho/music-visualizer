@@ -45,7 +45,10 @@ export function BarsVisualizer({
     const barsConfig = config.barsConfig ?? {
         barCount: 128,
         barLength: 0.9,
+        colorThreshold: 0.1,
         poles: 8,
+        reactiveFade: false,
+        useGradient: false,
     };
 
     useEffect(() => {
@@ -65,8 +68,21 @@ export function BarsVisualizer({
             // @ts-expect-error Uint8Array typing mismatch in TS DOM lib
             analyser.getByteFrequencyData(dataArray);
 
-            // Apply trail effect with fade
-            ctx.fillStyle = hexToRgba("#000000", config.fadeAmount);
+            // Calculate bass level for reactive effects
+            const bassEnd = Math.floor(bufferLength * 0.1);
+            let bassSum = 0;
+            for (let i = 0; i < bassEnd; i++) {
+                bassSum += dataArray[i];
+            }
+            const bassLevel = bassSum / bassEnd / 255;
+
+            // Apply trail effect with fade (reactive if enabled)
+            let fadeAmount = config.fadeAmount;
+            if (barsConfig.reactiveFade) {
+                // Reduce fade when bass is high (more trails on heavy bass)
+                fadeAmount = config.fadeAmount * (1 - bassLevel * 0.5);
+            }
+            ctx.fillStyle = hexToRgba("#000000", fadeAmount);
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             const barCount = Math.min(bufferLength, barsConfig.barCount);
@@ -173,23 +189,41 @@ export function BarsVisualizer({
                     // Calculate angle pointing towards screen center (reuse dx, dy)
                     const angle = Math.atan2(dy, dx);
 
-                    // Calculate color based on bar extension past threshold
+                    // Calculate color/gradient
                     const alpha = normalizedHeight * 0.8;
-                    const thresholdLength = maxLength * 0.1;
+                    const thresholdLength = maxLength * barsConfig.colorThreshold;
 
-                    let fillColor: string;
-                    if (barLength > thresholdLength) {
-                        const blendAmount = (barLength - thresholdLength) / (maxLength - thresholdLength);
-                        fillColor = lerpColor(primaryColor, secondaryColor, blendAmount, alpha);
+                    if (barsConfig.useGradient) {
+                        // Use gradient from base to tip
+                        const gradient = ctx.createLinearGradient(0, 0, barLength, 0);
+                        gradient.addColorStop(0, lerpColor(primaryColor, primaryColor, 0, alpha));
+
+                        if (barLength > thresholdLength) {
+                            const thresholdStop = thresholdLength / barLength;
+                            gradient.addColorStop(thresholdStop, lerpColor(primaryColor, primaryColor, 0, alpha));
+                            const blendAmount = (barLength - thresholdLength) / (maxLength - thresholdLength);
+                            gradient.addColorStop(1, lerpColor(primaryColor, secondaryColor, blendAmount, alpha));
+                        } else {
+                            gradient.addColorStop(1, lerpColor(primaryColor, primaryColor, 0, alpha));
+                        }
+
+                        ctx.fillStyle = gradient;
                     } else {
-                        fillColor = lerpColor(primaryColor, primaryColor, 0, alpha);
+                        // Use solid color based on bar extension
+                        let fillColor: string;
+                        if (barLength > thresholdLength) {
+                            const blendAmount = (barLength - thresholdLength) / (maxLength - thresholdLength);
+                            fillColor = lerpColor(primaryColor, secondaryColor, blendAmount, alpha);
+                        } else {
+                            fillColor = lerpColor(primaryColor, primaryColor, 0, alpha);
+                        }
+                        ctx.fillStyle = fillColor;
                     }
 
                     // Draw bar as a rectangle pointing towards center
                     ctx.save();
                     ctx.translate(barX, barY);
                     ctx.rotate(angle);
-                    ctx.fillStyle = fillColor;
                     ctx.fillRect(0, -barWidth / 2, barLength, barWidth);
                     ctx.restore();
                 }
@@ -213,6 +247,9 @@ export function BarsVisualizer({
         barsConfig.barCount,
         barsConfig.barLength,
         barsConfig.poles,
+        barsConfig.useGradient,
+        barsConfig.reactiveFade,
+        barsConfig.colorThreshold,
     ]);
 
     return null;

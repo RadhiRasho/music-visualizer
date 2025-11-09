@@ -209,9 +209,12 @@ export interface VisualizerConfig {
 	};
 	// Bars specific config
 	barsConfig?: {
-		poles: number; // Number of visualization poles (1-8)
+		poles: number; // Number of visualization poles (1-12)
 		barCount: number; // Number of bars per side (1-256)
 		barLength: number; // Max bar length as percentage of distance to center (0-1)
+		useGradient: boolean; // Use gradient along bars (primary to secondary)
+		reactiveFade: boolean; // Fade amount pulses with bass
+		colorThreshold: number; // Threshold for secondary color (0-1)
 	};
 }
 
@@ -219,7 +222,10 @@ export const DEFAULT_CONFIG: VisualizerConfig = {
 	barsConfig: {
 		barCount: 128,
 		barLength: 0.9,
+		colorThreshold: 0.1,
 		poles: 4,
+		reactiveFade: false,
+		useGradient: false,
 	},
 	circularConfig: {
 		autoRotate: false,

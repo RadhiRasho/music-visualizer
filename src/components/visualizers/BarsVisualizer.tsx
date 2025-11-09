@@ -84,8 +84,8 @@ export function BarsVisualizer({
             const barWidthVertical = Math.max(2, (screenCenterY / barCount) * 1.05);
             const barWidthDiagonal = Math.max(2, (Math.min(screenCenterX, screenCenterY) / barCount) * 1.05);
 
-            // Draw bars on all four sides + 4 corners (8 total)
-            for (let side = 0; side < 8; side++) {
+            // Draw bars on all four sides + 8 corners (12 total)
+            for (let side = 0; side < 12; side++) {
                 const barWidth = side < 4
                     ? ((side === 0 || side === 2) ? barWidthHorizontal : barWidthVertical)
                     : barWidthDiagonal;
@@ -114,21 +114,37 @@ export function BarsVisualizer({
                             barX = canvas.width;
                             barY = screenCenterY - offset * screenCenterY;
                             break;
-                        case 4: // Bottom-left corner
-                            barX = offset * screenCenterX;
+                        case 4: // Bottom-left corner - extend from left edge at bottom
+                            barX = 0;
+                            barY = canvas.height - Math.abs(offset) * screenCenterY;
+                            break;
+                        case 5: // Top-left corner - extend from left edge at top
+                            barX = 0;
+                            barY = Math.abs(offset) * screenCenterY;
+                            break;
+                        case 6: // Top-right corner - extend from right edge at top
+                            barX = canvas.width;
+                            barY = Math.abs(offset) * screenCenterY;
+                            break;
+                        case 7: // Bottom-right corner - extend from right edge at bottom
+                            barX = canvas.width;
+                            barY = canvas.height - Math.abs(offset) * screenCenterY;
+                            break;
+                        case 8: // Bottom-left corner - extend from bottom edge at left
+                            barX = Math.abs(offset) * screenCenterX;
                             barY = canvas.height;
                             break;
-                        case 5: // Top-left corner
-                            barX = offset * screenCenterX;
+                        case 9: // Bottom-right corner - extend from bottom edge at right
+                            barX = canvas.width - Math.abs(offset) * screenCenterX;
+                            barY = canvas.height;
+                            break;
+                        case 10: // Top-left corner - extend from top edge at left
+                            barX = Math.abs(offset) * screenCenterX;
                             barY = 0;
                             break;
-                        case 6: // Top-right corner
-                            barX = canvas.width;
-                            barY = offset * screenCenterY;
-                            break;
-                        case 7: // Bottom-right corner
-                            barX = canvas.width;
-                            barY = canvas.height - offset * screenCenterY;
+                        case 11: // Top-right corner - extend from top edge at right
+                            barX = canvas.width - Math.abs(offset) * screenCenterX;
+                            barY = 0;
                             break;
                     }
 
@@ -144,46 +160,34 @@ export function BarsVisualizer({
                     if (normalizedHeight < 0.01) continue;
 
                     // Calculate bar length (shooting toward center)
-                    const distanceToCenter = Math.sqrt(
-                        (screenCenterX - barX) ** 2 + (screenCenterY - barY) ** 2,
-                    );
+                    const dx = screenCenterX - barX;
+                    const dy = screenCenterY - barY;
+                    const distanceToCenter = Math.sqrt(dx * dx + dy * dy);
                     const minLength = distanceToCenter * 0.05;
                     const maxLength = distanceToCenter * barsConfig.barLength;
                     const barLength =
                         minLength + normalizedHeight * (maxLength - minLength);
 
-                    // Calculate angle pointing towards screen center
-                    const angle = Math.atan2(screenCenterY - barY, screenCenterX - barX);
+                    // Calculate angle pointing towards screen center (reuse dx, dy)
+                    const angle = Math.atan2(dy, dx);
 
-                    // Create gradient from base (primary) to tip (secondary) along bar length
+                    // Calculate color based on bar extension past threshold
                     const alpha = normalizedHeight * 0.8;
-                    const gradient = ctx.createLinearGradient(0, 0, barLength, 0);
-
-                    // Calculate threshold position (10% of max possible length)
                     const thresholdLength = maxLength * 0.1;
 
-                    // Base is always primary color
-                    gradient.addColorStop(0, lerpColor(primaryColor, primaryColor, 0, alpha));
-
-                    // If bar reaches threshold, add transition
+                    let fillColor: string;
                     if (barLength > thresholdLength) {
-                        // Add primary color at threshold position
-                        const thresholdStop = thresholdLength / barLength;
-                        gradient.addColorStop(thresholdStop, lerpColor(primaryColor, primaryColor, 0, alpha));
-
-                        // Blend to secondary at tip
                         const blendAmount = (barLength - thresholdLength) / (maxLength - thresholdLength);
-                        gradient.addColorStop(1, lerpColor(primaryColor, secondaryColor, blendAmount, alpha));
+                        fillColor = lerpColor(primaryColor, secondaryColor, blendAmount, alpha);
                     } else {
-                        // Bar doesn't reach threshold, stays primary
-                        gradient.addColorStop(1, lerpColor(primaryColor, primaryColor, 0, alpha));
+                        fillColor = lerpColor(primaryColor, primaryColor, 0, alpha);
                     }
 
                     // Draw bar as a rectangle pointing towards center
                     ctx.save();
                     ctx.translate(barX, barY);
                     ctx.rotate(angle);
-                    ctx.fillStyle = gradient;
+                    ctx.fillStyle = fillColor;
                     ctx.fillRect(0, -barWidth / 2, barLength, barWidth);
                     ctx.restore();
                 }

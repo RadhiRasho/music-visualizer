@@ -175,27 +175,29 @@ export default function CircularSettings({
                     />
                 </div>
 
-                <div className="flex flex-col gap-1">
-                    <Label
-                        className="text-xs font-semibold text-white/80 uppercase tracking-wide"
-                        htmlFor="rotation"
-                    >
-                        Rotation: {circularConfig.rotationOffset}°
-                    </Label>
-                    <Slider
-                        className="w-full"
-                        id="rotation"
-                        max={359}
-                        min={0}
-                        onValueChange={(value) =>
-                            updateCircularConfig({
-                                rotationOffset: value[0],
-                            })
-                        }
-                        step={1}
-                        value={[circularConfig.rotationOffset]}
-                    />
-                </div>
+                {!config.circularConfig?.autoRotate && (
+                    <div className="flex flex-col gap-1">
+                        <Label
+                            className="text-xs font-semibold text-white/80 uppercase tracking-wide"
+                            htmlFor="rotation"
+                        >
+                            Rotation: {circularConfig.rotationOffset}°
+                        </Label>
+                        <Slider
+                            className="w-full"
+                            id="rotation"
+                            max={359}
+                            min={0}
+                            onValueChange={(value) =>
+                                updateCircularConfig({
+                                    rotationOffset: value[0],
+                                })
+                            }
+                            step={1}
+                            value={[circularConfig.rotationOffset]}
+                        />
+                    </div>
+                )}
 
                 {circularConfig.autoRotate && (
                     <div className="flex flex-col gap-1">

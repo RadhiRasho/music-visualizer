@@ -13,49 +13,31 @@ export function useConfigStorage() {
 			const stored = sessionStorage.getItem(STORAGE_KEY);
 			if (stored) {
 				const parsed = JSON.parse(stored) as Partial<VisualizerConfig>;
-				const defaultCircular = DEFAULT_CONFIG.circularConfig;
 
 				// Build a complete config from stored values with defaults as fallback
 				return {
+					barsConfig: {
+						...(DEFAULT_CONFIG.barsConfig as NonNullable<
+							VisualizerConfig["barsConfig"]
+						>),
+						...parsed.barsConfig,
+					},
 					circularConfig: {
-						autoRotate:
-							parsed.circularConfig?.autoRotate ??
-							defaultCircular?.autoRotate ??
-							false,
-						barCount:
-							parsed.circularConfig?.barCount ??
-							defaultCircular?.barCount ??
-							360,
-						baseRadiusMax:
-							parsed.circularConfig?.baseRadiusMax ??
-							defaultCircular?.baseRadiusMax ??
-							0.25,
-						baseRadiusMin:
-							parsed.circularConfig?.baseRadiusMin ??
-							defaultCircular?.baseRadiusMin ??
-							0.1,
-						bassResponseCircle:
-							parsed.circularConfig?.bassResponseCircle ??
-							defaultCircular?.bassResponseCircle ??
-							true,
-						maxBarHeight:
-							parsed.circularConfig?.maxBarHeight ??
-							defaultCircular?.maxBarHeight ??
-							0.35,
-						poles: parsed.circularConfig?.poles ?? defaultCircular?.poles ?? 2,
-						rotationOffset:
-							parsed.circularConfig?.rotationOffset ??
-							defaultCircular?.rotationOffset ??
-							130,
-						rotationSpeed:
-							parsed.circularConfig?.rotationSpeed ??
-							defaultCircular?.rotationSpeed ??
-							0.1,
+						...(DEFAULT_CONFIG.circularConfig as NonNullable<
+							VisualizerConfig["circularConfig"]
+						>),
+						...parsed.circularConfig,
 					},
 					colorScheme: parsed.colorScheme ?? DEFAULT_CONFIG.colorScheme,
 					fadeAmount: parsed.fadeAmount ?? DEFAULT_CONFIG.fadeAmount,
 					shape: parsed.shape ?? DEFAULT_CONFIG.shape,
 					smoothing: parsed.smoothing ?? DEFAULT_CONFIG.smoothing,
+					waveformConfig: {
+						...(DEFAULT_CONFIG.waveformConfig as NonNullable<
+							VisualizerConfig["waveformConfig"]
+						>),
+						...parsed.waveformConfig,
+					},
 				};
 			}
 		} catch (error) {

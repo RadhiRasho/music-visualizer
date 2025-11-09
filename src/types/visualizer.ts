@@ -2,6 +2,10 @@ export type VisualizerShape = "circular" | "bars" | "waveform";
 
 export type FrequencyRange = "full" | "bass" | "mids" | "highs";
 
+export type ColorMode = "gradient" | "frequency" | "solid";
+
+export type SpeakerPattern = "rings" | "radial" | "pulse" | "star";
+
 export interface ColorScheme {
 	primary: string;
 	secondary: string;
@@ -220,6 +224,23 @@ export interface VisualizerConfig {
 		mirrorMode: boolean; // Mirror bars symmetrically from edges inward instead of bass at center
 		frequencyRange: FrequencyRange; // Which frequency range to visualize (full, bass, mids, highs)
 	};
+	// Waveform specific config
+	waveformConfig?: {
+		lineCount: number; // Number of concentric ripples radiating from center (20-100)
+		linePoints: number; // Number of points around each circular ripple for smoothness (64-512)
+		lineSpacing: number; // Controls wave distortion intensity (3-20)
+		lineWidth: number; // Thickness of each ripple line (1-5)
+		amplitudeScale: number; // How much audio distorts the circular ripples (0.1-2.0)
+		viewAngle: number; // Viewing angle in degrees (0-360), controls 3D perspective rotation
+		cameraTilt: number; // Vertical viewing angle/tilt (0.1-1.0, lower = more tilted)
+		depthCompression: number; // How compressed the vertical axis is (0.1-1.0)
+		rippleSpeed: number; // How fast ripples expand outward (0.5-3.0)
+		bassThreshold: number; // Sensitivity threshold for bass detection (0.05-0.5)
+		sizeScaling: number; // Scale ripples based on audio intensity (0-2.0)
+		colorMode: ColorMode; // How to color the ripples
+		speakerPattern: SpeakerPattern; // Speaker/source design in center
+		fillContours: boolean; // Fill between ripples for solid water-like effect
+	};
 }
 
 export const DEFAULT_CONFIG: VisualizerConfig = {
@@ -249,4 +270,20 @@ export const DEFAULT_CONFIG: VisualizerConfig = {
 	fadeAmount: 0.5,
 	shape: "circular",
 	smoothing: true,
+	waveformConfig: {
+		amplitudeScale: 0.8,
+		bassThreshold: 0.15,
+		cameraTilt: 0.5,
+		colorMode: "gradient",
+		depthCompression: 0.5,
+		fillContours: true,
+		lineCount: 80,
+		linePoints: 128,
+		lineSpacing: 8,
+		lineWidth: 2,
+		rippleSpeed: 1.0,
+		sizeScaling: 0.5,
+		speakerPattern: "rings",
+		viewAngle: 315, // Default: bottom-right to top-left (315 degrees = -45 degrees)
+	},
 };

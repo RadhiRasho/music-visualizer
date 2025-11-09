@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { VisualizerConfig } from "../../types/visualizer";
+import { DEFAULT_CONFIG, type VisualizerConfig } from "../../types/visualizer";
 
 interface CircularVisualizerProps {
     analyserRef: React.RefObject<AnalyserNode | null>;
@@ -16,18 +16,7 @@ export function CircularVisualizer({
 }: CircularVisualizerProps) {
     const animationIdRef = useRef<number | null>(null);
     const rotationRef = useRef<number>(0);
-    const circularConfig = config.circularConfig ?? {
-        autoRotate: false,
-        barCount: 360,
-        baseRadiusMax: 0.25,
-        baseRadiusMin: 0.1,
-        bassResponseCircle: true,
-        jaggedCircle: false,
-        maxBarHeight: 0.35,
-        poles: 2,
-        rotationOffset: 130,
-        rotationSpeed: 0.1,
-    };
+    const circularConfig = config.circularConfig ?? (DEFAULT_CONFIG.circularConfig as NonNullable<VisualizerConfig["circularConfig"]>);
 
     useEffect(() => {
         const draw = () => {

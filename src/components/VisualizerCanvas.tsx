@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import type { VisualizerConfig } from "../types/visualizer";
 import { BarsVisualizer } from "./visualizers/BarsVisualizer";
 import { CircularVisualizer } from "./visualizers/CircularVisualizer";
+import { WaveformVisualizer } from "./visualizers/WaveformVisualizer";
 
 interface VisualizerCanvasProps {
     analyserRef: React.RefObject<AnalyserNode | null>;
@@ -49,6 +50,14 @@ export function VisualizerCanvas({
             )}
             {isListening && config.shape === "bars" && (
                 <BarsVisualizer
+                    analyserRef={analyserRef}
+                    canvasRef={canvasRef}
+                    config={config}
+                    dataArrayRef={dataArrayRef}
+                />
+            )}
+            {isListening && config.shape === "waveform" && (
+                <WaveformVisualizer
                     analyserRef={analyserRef}
                     canvasRef={canvasRef}
                     config={config}

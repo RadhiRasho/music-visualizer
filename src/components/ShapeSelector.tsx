@@ -50,10 +50,10 @@ export function ShapeSelector({ value, onChange }: ShapeSelectorProps) {
                             Bars
                         </span>
                     </SelectItem>
-                    <SelectItem disabled value="waveform">
+                    <SelectItem value="waveform">
                         <span className="flex items-center gap-2">
                             <WavesIcon className="w-4 h-4" />
-                            Waveform (Coming Soon)
+                            Waveform
                         </span>
                     </SelectItem>
                 </SelectContent>

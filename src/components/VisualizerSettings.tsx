@@ -3,6 +3,7 @@ import { ColorSchemeSelector } from "./ColorSchemeSelector";
 import { ShapeSelector } from "./ShapeSelector";
 import BarSettings from "./settings/BarSettings";
 import CircularSettings from "./settings/CircularSettings";
+import WaveformSettings from "./settings/WaveformSettings";
 
 interface VisualizerSettingsProps {
     config: VisualizerConfig;
@@ -39,6 +40,11 @@ export function VisualizerSettings({
             {/* Bars specific settings */}
             {config.shape === "bars" && (
                 <BarSettings config={config} onChange={onChange} />
+            )}
+
+            {/* Waveform specific settings */}
+            {config.shape === "waveform" && (
+                <WaveformSettings config={config} onChange={onChange} />
             )}
         </div>
     );
